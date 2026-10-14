@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chia Đội</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Be+Vietnam+Pro:wght@400;500;600&display=swap">
+<style>
+/* Layout: bảng tỉ số trên cùng, danh sách cầu thủ bên trái, sân cỏ có vạch vôi bên phải (hai đội hai nửa sân); điện thoại thì sân xoay dọc */
+:root{
+  --bg:#e9efe6; --surface:#ffffff; --fg:#17231b; --muted:#5d6b61; --line:#d3ddd0;
+  --grass:#3d8b3d; --grass-2:#357c35; --chalk:#ffffffe6; --board:#14201a; --board-fg:#f4f7f2; --led:#ffd23f;
+  --team-a:#ff7a2f; --team-b:#2f8fe0; --accent:#2e7d32;
+  --tS:#c9971a; --tA:#8a5cd0; --tB:#2f8fe0; --tC:#6f7d73;
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"Be Vietnam Pro",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1712; --surface:#18221c; --fg:#e7eee8; --muted:#97a69b; --line:#28362d;
+  --grass:#2f6f31; --grass-2:#29632b; --chalk:#ffffffd9; --board:#08100b; --board-fg:#f4f7f2; --led:#ffd23f;
+  --team-a:#ff8a45; --team-b:#4aa2ec; --accent:#5cb85f;
+  --tS:#e3b13a; --tA:#a783e6; --tB:#4aa2ec; --tC:#97a69b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1712; --surface:#18221c; --fg:#e7eee8; --muted:#97a69b; --line:#28362d;
+  --grass:#2f6f31; --grass-2:#29632b; --chalk:#ffffffd9; --board:#08100b; --board-fg:#f4f7f2; --led:#ffd23f;
+  --team-a:#ff8a45; --team-b:#4aa2ec; --accent:#5cb85f;
+  --tS:#e3b13a; --tA:#a783e6; --tB:#4aa2ec; --tC:#97a69b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Bảng tỉ số */
+.board{background:var(--board);color:var(--board-fg);border-radius:12px;padding:14px 18px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;margin-bottom:18px;box-shadow:0 4px 0 #00000030}
+.board .side{display:flex;align-items:center;gap:10px;min-width:0}
+.board .side.b{justify-content:flex-end;text-align:right}
+.board .tname{font-family:var(--display);font-weight:800;font-size:1.5rem;text-transform:uppercase;letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board .dot{width:12px;height:12px;border-radius:50%;flex:none}
+.score{font-family:var(--display);font-weight:800;font-size:2.4rem;line-height:1;color:var(--led);font-variant-numeric:tabular-nums;letter-spacing:.04em;background:#00000055;padding:4px 14px;border-radius:6px;white-space:nowrap}
+.board .sub{grid-column:1/-1;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.8rem;color:#b9c6bd;border-top:1px solid #ffffff1f;padding-top:8px}
+.board .sub b{font-family:var(--display);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--board-fg)}
+@media(max-width:520px){.board .tname{font-size:1.1rem}.score{font-size:1.8rem;padding:4px 10px}}
+
+.grid{display:grid;grid-template-columns:minmax(0,350px) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+h2{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:1.05rem;margin:0 0 10px;color:var(--muted)}
+.add{display:flex;gap:6px}
+input[type=text]{flex:1;min-width:0;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+select{font:inherit;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:8px 12px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--led);outline-offset:2px}
+.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.hint{color:var(--muted);font-size:.82rem;margin:8px 0 0}
+.bulk{margin-top:10px} .bulk summary{cursor:pointer;color:var(--muted);font-size:.88rem}
+textarea{width:100%;font:inherit;font-size:.9rem;min-height:110px;margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+.roster{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:2px;max-height:440px;overflow:auto}
+.roster li{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px}
+.roster li:hover{background:var(--bg)}
+.roster .no{font-family:var(--display);font-weight:600;color:var(--muted);width:20px;text-align:right;font-variant-numeric:tabular-nums}
+.roster .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tiers{display:flex;gap:2px}
+.tiers button{width:28px;padding:3px 0;font-family:var(--display);font-weight:800;font-size:.95rem;color:var(--muted);background:transparent;border-color:transparent}
+.tiers button[aria-pressed=true]{color:#fff;background:var(--tc);border-color:var(--tc)}
+.del{border:0;background:transparent;color:var(--muted);padding:2px 6px}
+.del:hover{color:var(--team-a)}
+.count{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:.85rem;color:var(--muted)}
+.count button{padding:4px 8px;font-size:.82rem}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.legend b{font-family:var(--display);color:var(--tc)}
+
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:var(--surface)}
+.seg button[aria-pressed=true]{background:var(--fg);color:var(--bg)}
+.go{margin-left:auto;font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:1.05rem;padding:8px 18px}
+
+/* Sân cỏ */
+.pitch{position:relative;display:grid;grid-template-columns:1fr 1fr;border-radius:8px;overflow:hidden;
+  background:repeating-linear-gradient(90deg,var(--grass) 0 10%,var(--grass-2) 10% 20%);
+  padding:14px;min-height:420px;box-shadow:inset 0 0 0 6px var(--grass)}
+.marks{position:absolute;inset:14px;border:2px solid var(--chalk);pointer-events:none}
+.marks::before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:2px solid var(--chalk)}
+.marks .circle{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;border:2px solid var(--chalk);border-radius:50%}
+.marks .circle::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;background:var(--chalk);border-radius:50%}
+.marks .box{position:absolute;top:25%;bottom:25%;width:14%;border:2px solid var(--chalk)}
+.marks .box.l{left:-2px;border-left:0} .marks .box.r{right:-2px;border-right:0}
+.marks .goal{position:absolute;top:40%;bottom:40%;width:5%;border:2px solid var(--chalk)}
+.marks .goal.l{left:-2px;border-left:0} .marks .goal.r{right:-2px;border-right:0}
+.team{position:relative;z-index:1;padding:16px 18px;min-width:0;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.team.a{padding-right:76px} .team.b{padding-left:76px}
+.team ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.team li{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 6px;background:#0d1f10b3;color:#fff;border-radius:99px;backdrop-filter:blur(2px);animation:in .3s ease both}
+.team li .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.shirt{width:26px;height:24px;flex:none;display:grid;place-items:center;position:relative}
+.shirt svg{position:absolute;inset:0;width:100%;height:100%}
+.shirt span{position:relative;font-family:var(--display);font-weight:800;font-size:.8rem;color:#fff;margin-top:2px}
+.chip{font-family:var(--display);font-weight:800;font-size:.85rem;color:#fff;background:var(--tc);border-radius:4px;width:22px;text-align:center;flex:none}
+@keyframes in{from{transform:translateY(-10px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){.team li{animation:none}}
+.empty{position:relative;z-index:1;grid-column:1/-1;align-self:center;text-align:center;color:#fff;font-weight:500;background:#0d1f10b3;border-radius:8px;padding:14px;max-width:320px;justify-self:center}
+
+/* Điện thoại: sân xoay dọc, hai đội trên/dưới */
+@media(max-width:560px){
+  .pitch{grid-template-columns:1fr;background:repeating-linear-gradient(180deg,var(--grass) 0 8%,var(--grass-2) 8% 16%)}
+  .marks::before{left:0;right:0;top:50%;bottom:auto;border-left:0;border-top:2px solid var(--chalk)}
+  .marks .circle{width:90px;height:90px;margin:-45px 0 0 -45px}
+  .marks .box{top:auto;bottom:auto;left:25%;right:25%;width:auto;height:9%;border:2px solid var(--chalk)}
+  .marks .box.l{top:-2px;border-top:0} .marks .box.r{bottom:-2px;border-bottom:0}
+  .marks .goal{top:auto;bottom:auto;left:40%;right:40%;width:auto;height:3.5%}
+  .marks .goal.l{top:-2px;border-top:0;border-left:2px solid var(--chalk)} .marks .goal.r{bottom:-2px;border-bottom:0;border-right:2px solid var(--chalk)}
+  .team.a,.team.b{padding:44px 14px 60px}
+  .team.b{padding:60px 14px 44px}
+}
+
+.foot{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.names{display:flex;gap:8px;flex-wrap:wrap;flex:1;min-width:0}
+.names label{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted);min-width:0;flex:1 1 140px}
+.names input{flex:1;min-width:0;padding:6px 8px}
+.names .dot{width:10px;height:10px;border-radius:50%;flex:none}
+</style>
+<style>body{margin:0}[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="board" id="board" aria-live="polite"></div>
+
+  <div class="grid">
+    <section class="panel" aria-label="Danh sách cầu thủ">
+      <h2>Danh sách cầu thủ</h2>
+      <form class="add" id="addForm">
+        <input type="text" id="nameIn" placeholder="Tên cầu thủ" autocomplete="off">
+        <select id="tierIn" aria-label="Tier">
+          <option value="S">S</option><option value="A">A</option>
+          <option value="B" selected>B</option><option value="C">C</option>
+        </select>
+        <button class="primary" type="submit">Thêm</button>
+      </form>
+      <details class="bulk">
+        <summary>Dán nhiều người cùng lúc</summary>
+        <textarea id="bulkIn" placeholder="Mỗi dòng một người, tier ở cuối:&#10;Minh S&#10;Lan A&#10;Tuấn"></textarea>
+        <button type="button" id="bulkBtn">Thêm tất cả</button>
+        <p class="hint">Không ghi tier thì mặc định là B.</p>
+      </details>
+      <ul class="roster" id="roster"></ul>
+      <div class="count"><span id="countTxt"></span><button type="button" id="clearBtn">Xoá hết</button></div>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <section aria-label="Kết quả chia đội">
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Cách chia">
+          <button type="button" id="modeBal" aria-pressed="true">Cân bằng theo tier</button>
+          <button type="button" id="modeRnd" aria-pressed="false">Ngẫu nhiên</button>
+        </div>
+        <button class="primary go" type="button" id="splitBtn">Chia đội</button>
+      </div>
+      <div class="pitch" id="pitch">
+        <div class="marks" aria-hidden="true"><span class="circle"></span><span class="box l"></span><span class="box r"></span><span class="goal l"></span><span class="goal r"></span></div>
+        <div id="teams" style="display:contents"></div>
+      </div>
+      <div class="foot">
+        <div class="names">
+          <label><span class="dot" style="background:var(--team-a)"></span><input type="text" id="tn0" aria-label="Tên đội 1"></label>
+          <label><span class="dot" style="background:var(--team-b)"></span><input type="text" id="tn1" aria-label="Tên đội 2"></label>
+        </div>
+        <button type="button" id="copyBtn">Sao chép đội hình</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const TIERS={S:4,A:3,B:2,C:1};
+const TCOL={S:'var(--tS)',A:'var(--tA)',B:'var(--tB)',C:'var(--tC)'};
+const TEAMCOL=['var(--team-a)','var(--team-b)'];
+const SAMPLE=[["Minh","S"],["Hùng","S"],["Lan","A"],["Tuấn","A"],["Quân","A"],["Hà","B"],["Phong","B"],["Ngọc","B"],["Đức","B"],["Vy","C"],["Khoa","C"],["Trang","C"]];
+let state={players:SAMPLE.map(([n,t])=>({id:uid(),name:n,tier:t})),mode:'bal',names:['Áo Cam','Áo Xanh'],teams:null};
+function uid(){return Math.random().toString(36).slice(2,9)}
+try{const s=JSON.parse(localStorage.getItem('chia-doi'));if(s&&Array.isArray(s.players))state={...state,...s,teams:null}}catch(e){}
+function save(){try{localStorage.setItem('chia-doi',JSON.stringify({players:state.players,mode:state.mode,names:state.names}))}catch(e){}}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const sum=t=>t.reduce((s,p)=>s+TIERS[p.tier],0);
+
+function splitRandom(ps){const s=shuffle(ps),h=Math.ceil(s.length/2);return Math.random()<.5?[s.slice(0,h),s.slice(h)]:[s.slice(h),s.slice(0,h)]}
+
+// Cân bằng: xáo trong từng tier, xếp từ mạnh tới yếu, mỗi người vào đội đang ít điểm hơn
+// (số người hai đội chênh tối đa 1). Thử nhiều lần, chọn ngẫu nhiên một trong các cách chia tốt nhất.
+function splitBalanced(ps){
+  const cap=Math.ceil(ps.length/2);let best=[],bestDiff=Infinity;
+  for(let r=0;r<300;r++){
+    const order=shuffle(ps).sort((a,b)=>TIERS[b.tier]-TIERS[a.tier]);
+    const T=[[],[]],S=[0,0];
+    for(const p of order){
+      let k;
+      if(T[0].length>=cap)k=1;else if(T[1].length>=cap)k=0;
+      else if(S[0]!==S[1])k=S[0]<S[1]?0:1;
+      else if(T[0].length!==T[1].length)k=T[0].length<T[1].length?0:1;
+      else k=Math.random()<.5?0:1;
+      T[k].push(p);S[k]+=TIERS[p.tier];
+    }
+    const tierGap=Object.keys(TIERS).reduce((g,t)=>g+Math.abs(T[0].filter(p=>p.tier===t).length-T[1].filter(p=>p.tier===t).length),0);
+    const d=Math.abs(S[0]-S[1])*10+tierGap;
+    if(d<bestDiff){bestDiff=d;best=[T]}else if(d===bestDiff)best.push(T);
+  }
+  return best[Math.floor(Math.random()*best.length)];
+}
+
+const SHIRT=c=>`<svg viewBox="0 0 26 24" aria-hidden="true"><path d="M8 1 L3 3 L0 9 L4 11 L5 8 L5 23 L21 23 L21 8 L22 11 L26 9 L23 3 L18 1 Q13 5 8 1 Z" fill="${c}" stroke="#00000040" stroke-width="1"/></svg>`;
+
+function renderRoster(){
+  $('roster').innerHTML=state.players.map((p,i)=>`<li><span class="no">${i+1}</span><span class="name">${esc(p.name)}</span>
+    <span class="tiers" role="group" aria-label="Tier của ${esc(p.name)}">${Object.keys(TIERS).map(t=>
+      `<button type="button" style="--tc:${TCOL[t]}" aria-pressed="${p.tier===t}" data-id="${p.id}" data-tier="${t}">${t}</button>`).join('')}</span>
+    <button type="button" class="del" data-del="${p.id}" aria-label="Xoá ${esc(p.name)}">✕</button></li>`).join('');
+  const c={S:0,A:0,B:0,C:0};state.players.forEach(p=>c[p.tier]++);
+  $('countTxt').textContent=`${state.players.length} cầu thủ`;
+  $('legend').innerHTML=Object.keys(TIERS).map(t=>`<span style="--tc:${TCOL[t]}"><b>${t}</b> = ${TIERS[t]} điểm · ${c[t]} người</span>`).join('');
+}
+
+function renderBoard(){
+  const t=state.teams,s0=t?sum(t[0]):0,s1=t?sum(t[1]):0,d=Math.abs(s0-s1);
+  const msg=!t?'Chưa chia đội':state.mode==='rnd'?'Chia ngẫu nhiên':d===0?'Cân bằng tuyệt đối':'Chênh '+d+' điểm';
+  $('board').innerHTML=`<div class="side"><span class="dot" style="background:var(--team-a)"></span><span class="tname">${esc(state.names[0]||'Đội 1')}</span></div>
+    <div class="score">${t?s0:'–'} : ${t?s1:'–'}</div>
+    <div class="side b"><span class="tname">${esc(state.names[1]||'Đội 2')}</span><span class="dot" style="background:var(--team-b)"></span></div>
+    <div class="sub"><span><b>Tổng điểm tier</b></span><span>${t?t[0].length+' vs '+t[1].length+' người · ':''}${msg}</span></div>`;
+}
+
+function renderTeams(){
+  renderBoard();
+  if(!state.teams){$('teams').innerHTML=`<div class="empty">Bấm <b>Chia đội</b> để xếp ${state.players.length} cầu thủ ra sân.</div>`;return}
+  $('teams').innerHTML=state.teams.map((t,i)=>`<div class="team ${i?'b':'a'}"><ol>${
+    t.slice().sort((a,b)=>TIERS[b.tier]-TIERS[a.tier]).map((p,j)=>`<li style="animation-delay:${j*45}ms">
+      <span class="shirt">${SHIRT(TEAMCOL[i])}<span>${j+1}</span></span>
+      <span class="name">${esc(p.name)}</span><span class="chip" style="--tc:${TCOL[p.tier]}">${p.tier}</span></li>`).join('')
+  }</ol></div>`).join('');
+}
+
+function copyResult(){
+  const b=$('copyBtn');if(!state.teams){b.textContent='Chưa có đội hình';return}
+  const txt=state.teams.map((t,i)=>`${state.names[i]} (${sum(t)} điểm):\n`+t.map(p=>`- ${p.name} [${p.tier}]`).join('\n')).join('\n\n');
+  navigator.clipboard.writeText(txt).then(()=>b.textContent='Đã sao chép',()=>{b.textContent='Không sao chép được'});
+  setTimeout(()=>b.textContent='Sao chép đội hình',2500);
+}
+
+function setMode(m){state.mode=m;$('modeBal').setAttribute('aria-pressed',m==='bal');$('modeRnd').setAttribute('aria-pressed',m==='rnd');save()}
+
+$('addForm').addEventListener('submit',e=>{e.preventDefault();const n=$('nameIn').value.trim();if(!n)return;
+  state.players.push({id:uid(),name:n,tier:$('tierIn').value});$('nameIn').value='';$('nameIn').focus();save();renderRoster()});
+$('bulkBtn').addEventListener('click',()=>{
+  $('bulkIn').value.split('\n').map(l=>l.trim()).filter(Boolean).forEach(l=>{
+    const m=l.match(/^(.*?)[\s,;:-]+([SABC])$/i);
+    state.players.push(m?{id:uid(),name:m[1].trim(),tier:m[2].toUpperCase()}:{id:uid(),name:l,tier:'B'})});
+  $('bulkIn').value='';save();renderRoster()});
+$('roster').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.del)state.players=state.players.filter(p=>p.id!==b.dataset.del);
+  else{const p=state.players.find(p=>p.id===b.dataset.id);if(p)p.tier=b.dataset.tier}
+  save();renderRoster()});
+let clearArmed=false;
+$('clearBtn').addEventListener('click',e=>{if(!clearArmed){clearArmed=true;e.target.textContent='Bấm lần nữa để xoá';setTimeout(()=>{clearArmed=false;e.target.textContent='Xoá hết'},3000);return}
+  state.players=[];state.teams=null;clearArmed=false;e.target.textContent='Xoá hết';save();renderRoster();renderTeams()});
+$('modeBal').addEventListener('click',()=>setMode('bal'));
+$('modeRnd').addEventListener('click',()=>setMode('rnd'));
+$('splitBtn').addEventListener('click',()=>{
+  if(state.players.length<2){$('teams').innerHTML='<div class="empty">Cần ít nhất 2 cầu thủ để chia đội.</div>';return}
+  state.teams=state.mode==='bal'?splitBalanced(state.players):splitRandom(state.players);renderTeams()});
+[0,1].forEach(i=>{const el=$('tn'+i);el.value=state.names[i];el.addEventListener('input',()=>{state.names[i]=el.value;save();renderBoard()})});
+$('copyBtn').addEventListener('click',copyResult);
+
+setMode(state.mode);renderRoster();
+state.teams=splitBalanced(state.players);renderTeams();
+</script>
+</body>
+</html>
